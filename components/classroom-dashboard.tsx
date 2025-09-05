@@ -626,41 +626,29 @@ export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
                     className={`${classItem.status === "current" ? "border-primary bg-primary/5" : ""}`}
                   >
                     <CardContent className="pt-6">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-3">
-                            <h3 className="text-lg font-semibold">{classItem.subject}</h3>
-                            {classItem.status === "current" && (
-                              <Badge className="bg-green-500 hover:bg-green-600">
-                                <Clock className="mr-1 h-3 w-3" />
-                                Current Class
-                              </Badge>
-                            )}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <h3 className="text-lg font-semibold">{classItem.subject}</h3>
+                          {classItem.status === "current" && (
+                            <Badge className="bg-green-500 hover:bg-green-600">
+                              <Clock className="mr-1 h-3 w-3" />
+                              Current Class
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Clock className="h-4 w-4" />
+                            <span>{classItem.time}</span>
                           </div>
-                          <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-4 w-4" />
-                              <span>{classItem.time}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Users className="h-4 w-4" />
-                              <span>{classItem.professor}</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-4 text-sm font-medium">
-                            <Badge variant="secondary">{classItem.building}</Badge>
-                            <Badge variant="outline">{classItem.room}</Badge>
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Users className="h-4 w-4" />
+                            <span>{classItem.professor}</span>
                           </div>
                         </div>
-                        <div className="flex flex-col items-end gap-2">
-                          <Button variant="outline" size="sm">
-                            View Details
-                          </Button>
-                          {classItem.status === "current" && (
-                            <Button size="sm" className="bg-green-500 hover:bg-green-600">
-                              Join Class
-                            </Button>
-                          )}
+                        <div className="flex items-center gap-4">
+                          <Badge variant="secondary">{classItem.building}</Badge>
+                          <Badge variant="outline">{classItem.room}</Badge>
                         </div>
                       </div>
                     </CardContent>
