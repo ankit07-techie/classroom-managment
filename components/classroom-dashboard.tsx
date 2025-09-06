@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   BookOpen,
   Users,
@@ -36,6 +37,19 @@ export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [showNotifications, setShowNotifications] = useState(false)
   const [newNotification, setNewNotification] = useState("")
+  const [showCreateRoom, setShowCreateRoom] = useState(false)
+  const [showCreateAssignment, setShowCreateAssignment] = useState(false)
+  const [newRoom, setNewRoom] = useState({
+    name: "",
+    courseCode: "",
+    section: "",
+  })
+  const [newAssignment, setNewAssignment] = useState({
+    title: "",
+    description: "",
+    section: "",
+    file: null as File | null,
+  })
   const [notifications, setNotifications] = useState([
     {
       id: 1,
@@ -83,6 +97,19 @@ export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
     }
   }
 
+  const handleAssignmentFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      const allowedTypes = ["application/pdf", "image/jpeg", "image/png", "image/jpg"]
+      if (!allowedTypes.includes(file.type)) {
+        alert("Only PDF, JPG, and PNG files are allowed")
+        return
+      }
+      setNewAssignment({ ...newAssignment, file })
+      console.log("[v0] Assignment file uploaded:", file.name, "Type:", file.type)
+    }
+  }
+
   const handleAddNotification = () => {
     if (newNotification.trim() && userRole === "faculty") {
       const notification = {
@@ -94,6 +121,28 @@ export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
       }
       setNotifications([notification, ...notifications])
       setNewNotification("")
+    }
+  }
+
+  const handleCreateRoom = () => {
+    if (newRoom.name.trim() && newRoom.courseCode.trim() && newRoom.section.trim()) {
+      console.log("[v0] Creating room:", newRoom)
+      setNewRoom({ name: "", courseCode: "", section: "" })
+      setShowCreateRoom(false)
+      alert("Room created successfully!")
+    } else {
+      alert("Please fill in all fields")
+    }
+  }
+
+  const handleCreateAssignment = () => {
+    if (newAssignment.title.trim() && newAssignment.description.trim() && newAssignment.section.trim()) {
+      console.log("[v0] Creating assignment:", newAssignment)
+      setNewAssignment({ title: "", description: "", section: "", file: null })
+      setShowCreateAssignment(false)
+      alert("Assignment created successfully!")
+    } else {
+      alert("Please fill in all required fields")
     }
   }
 
@@ -287,6 +336,166 @@ export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
         </div>
       )}
 
+      {/* Room Creation Modal */}
+      {showCreateRoom && userRole === "faculty" && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          onClick={() => setShowCreateRoom(false)}
+        >
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Create New Room</h2>
+              <Button variant="ghost" size="icon" onClick={() => setShowCreateRoom(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="room-name" className="block text-sm font-medium mb-2">
+                  Room Name
+                </label>
+                <Input
+                  id="room-name"
+                  placeholder="e.g., Advanced Mathematics"
+                  value={newRoom.name}
+                  onChange={(e) => setNewRoom({ ...newRoom, name: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="course-code" className="block text-sm font-medium mb-2">
+                  Course Code
+                </label>
+                <Input
+                  id="course-code"
+                  placeholder="e.g., MATH301"
+                  value={newRoom.courseCode}
+                  onChange={(e) => setNewRoom({ ...newRoom, courseCode: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="section" className="block text-sm font-medium mb-2">
+                  Section
+                </label>
+                <Select value={newRoom.section} onValueChange={(value) => setNewRoom({ ...newRoom, section: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select section" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="A">Section A</SelectItem>
+                    <SelectItem value="B">Section B</SelectItem>
+                    <SelectItem value="C">Section C</SelectItem>
+                    <SelectItem value="D">Section D</SelectItem>
+                    <SelectItem value="E">Section E</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button variant="outline" onClick={() => setShowCreateRoom(false)} className="flex-1">
+                  Cancel
+                </Button>
+                <Button onClick={handleCreateRoom} className="flex-1">
+                  Create Room
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assignment Creation Modal */}
+      {showCreateAssignment && userRole === "faculty" && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          onClick={() => setShowCreateAssignment(false)}
+        >
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Create New Assignment</h2>
+              <Button variant="ghost" size="icon" onClick={() => setShowCreateAssignment(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="assignment-title" className="block text-sm font-medium mb-2">
+                  Assignment Title
+                </label>
+                <Input
+                  id="assignment-title"
+                  placeholder="e.g., Calculus Problem Set 4"
+                  value={newAssignment.title}
+                  onChange={(e) => setNewAssignment({ ...newAssignment, title: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="assignment-description" className="block text-sm font-medium mb-2">
+                  Description
+                </label>
+                <Textarea
+                  id="assignment-description"
+                  placeholder="Assignment instructions and requirements..."
+                  value={newAssignment.description}
+                  onChange={(e) => setNewAssignment({ ...newAssignment, description: e.target.value })}
+                  className="min-h-[80px]"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="assignment-section" className="block text-sm font-medium mb-2">
+                  Section
+                </label>
+                <Select
+                  value={newAssignment.section}
+                  onValueChange={(value) => setNewAssignment({ ...newAssignment, section: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select section" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="A">Section A</SelectItem>
+                    <SelectItem value="B">Section B</SelectItem>
+                    <SelectItem value="C">Section C</SelectItem>
+                    <SelectItem value="D">Section D</SelectItem>
+                    <SelectItem value="E">Section E</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label htmlFor="assignment-file" className="block text-sm font-medium mb-2">
+                  Upload File (PDF, JPG, PNG - Optional)
+                </label>
+                <Input
+                  id="assignment-file"
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={handleAssignmentFileUpload}
+                  className="cursor-pointer"
+                />
+                {newAssignment.file && (
+                  <p className="text-sm text-green-600 mt-1">✓ {newAssignment.file.name} selected</p>
+                )}
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button variant="outline" onClick={() => setShowCreateAssignment(false)} className="flex-1">
+                  Cancel
+                </Button>
+                <Button onClick={handleCreateAssignment} className="flex-1">
+                  Create Assignment
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -413,11 +622,19 @@ export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
                 <CardContent className="space-y-3">
                   {userRole === "faculty" ? (
                     <>
-                      <Button className="w-full justify-start bg-transparent" variant="outline">
+                      <Button
+                        className="w-full justify-start bg-transparent"
+                        variant="outline"
+                        onClick={() => setShowCreateRoom(true)}
+                      >
                         <Plus className="mr-2 h-4 w-4" />
                         Create New Room
                       </Button>
-                      <Button className="w-full justify-start bg-transparent" variant="outline">
+                      <Button
+                        className="w-full justify-start bg-transparent"
+                        variant="outline"
+                        onClick={() => setShowCreateAssignment(true)}
+                      >
                         <FileText className="mr-2 h-4 w-4" />
                         New Assignment
                       </Button>
@@ -467,7 +684,7 @@ export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold">{userRole === "faculty" ? "Manage Classrooms" : "My Classrooms"}</h2>
               {userRole === "faculty" && (
-                <Button>
+                <Button onClick={() => setShowCreateRoom(true)}>
                   <Plus className="mr-2 h-4 w-4" />
                   Create Room
                 </Button>
@@ -505,7 +722,7 @@ export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold">{userRole === "faculty" ? "Manage Assignments" : "My Assignments"}</h2>
               {userRole === "faculty" && (
-                <Button>
+                <Button onClick={() => setShowCreateAssignment(true)}>
                   <Plus className="mr-2 h-4 w-4" />
                   Create Assignment
                 </Button>
