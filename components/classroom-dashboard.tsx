@@ -26,6 +26,7 @@ import {
   AlertCircle,
   X,
   Send,
+  Trash2,
 } from "lucide-react"
 
 interface ClassroomDashboardProps {
@@ -39,6 +40,12 @@ export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
   const [newNotification, setNewNotification] = useState("")
   const [showCreateRoom, setShowCreateRoom] = useState(false)
   const [showCreateAssignment, setShowCreateAssignment] = useState(false)
+  const [showUploadNotes, setShowUploadNotes] = useState(false)
+  const [newSubject, setNewSubject] = useState("")
+  const [showCreateSubject, setShowCreateSubject] = useState(false)
+  const [showCreateChapter, setShowCreateChapter] = useState(false)
+  const [selectedSubjectForChapter, setSelectedSubjectForChapter] = useState("")
+  const [newChapter, setNewChapter] = useState("")
   const [newRoom, setNewRoom] = useState({
     name: "",
     courseCode: "",
@@ -47,6 +54,11 @@ export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
   const [newAssignment, setNewAssignment] = useState({
     title: "",
     description: "",
+    section: "",
+    file: null as File | null,
+  })
+  const [newNote, setNewNote] = useState({
+    title: "",
     section: "",
     file: null as File | null,
   })
@@ -81,6 +93,31 @@ export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
     },
   ])
 
+  const [notesUploadStep, setNotesUploadStep] = useState(1)
+  const [notesUploadData, setNotesUploadData] = useState({
+    subject: "",
+    section: "",
+    chapter: "",
+    files: [] as File[],
+  })
+  const [notesError, setNotesError] = useState("")
+  const [subjects, setSubjects] = useState(["Mathematics", "Physics", "Chemistry", "Computer Science"])
+  const [showAddSubject, setShowAddSubject] = useState(false)
+  const [newSubjectName, setNewSubjectName] = useState("")
+  const [showEditSubjects, setShowEditSubjects] = useState(false)
+  const [sections, setSections] = useState(["A", "B", "C", "D", "E"])
+  const [showEditSections, setShowEditSections] = useState(false)
+  const [newSectionName, setNewSectionName] = useState("")
+  const [chapters, setChapters] = useState(["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4", "Chapter 5"])
+  const [showEditChapters, setShowEditChapters] = useState(false)
+  const [newChapterName, setNewChapterName] = useState("")
+
+  const [subjectsOld, setSubjectsOld] = useState([
+    { id: 1, name: "Mathematics", chapters: ["Calculus", "Linear Algebra", "Statistics"] },
+    { id: 2, name: "Physics", chapters: ["Mechanics", "Thermodynamics", "Electromagnetism"] },
+    { id: 3, name: "Chemistry", chapters: ["Organic Chemistry", "Inorganic Chemistry", "Physical Chemistry"] },
+  ])
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
@@ -107,6 +144,26 @@ export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
       }
       setNewAssignment({ ...newAssignment, file })
       console.log("[v0] Assignment file uploaded:", file.name, "Type:", file.type)
+    }
+  }
+
+  const handleNotesFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || [])
+    if (files.length > 0) {
+      const allowedTypes = ["application/pdf", "image/jpeg", "image/png", "image/jpg"]
+      const validFiles = files.filter((file) => allowedTypes.includes(file.type))
+
+      if (validFiles.length !== files.length) {
+        setNotesError("Only PDF, JPG, and PNG files are allowed")
+        return
+      }
+
+      setNotesUploadData({ ...notesUploadData, files: validFiles })
+      setNotesError("")
+      console.log(
+        "[v0] Notes files uploaded:",
+        validFiles.map((f) => f.name),
+      )
     }
   }
 
@@ -143,6 +200,137 @@ export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
       alert("Assignment created successfully!")
     } else {
       alert("Please fill in all required fields")
+    }
+  }
+
+  const handleUploadNotes = () => {
+    if (newNote.title.trim() && newNote.section.trim() && newNote.file) {
+      console.log("[v0] Uploading notes:", newNote)
+      setNewNote({ title: "", section: "", file: null })
+      setShowUploadNotes(false)
+      alert("Notes uploaded successfully!")
+    } else {
+      alert("Please fill in all fields and select a file")
+    }
+  }
+
+  const handleCreateSubject = () => {
+    if (newSubject.trim()) {
+      const newSubjectObj = {
+        id: subjectsOld.length + 1,
+        name: newSubject,
+        chapters: [],
+      }
+      setSubjectsOld([...subjectsOld, newSubjectObj])
+      setNewSubject("")
+      setShowCreateSubject(false)
+      alert("Subject created successfully!")
+    } else {
+      alert("Please enter a subject name")
+    }
+  }
+
+  const handleCreateChapter = () => {
+    if (newChapter.trim() && selectedSubjectForChapter) {
+      setSubjectsOld(
+        subjectsOld.map((subject) =>
+          subject.name === selectedSubjectForChapter
+            ? { ...subject, chapters: [...subject.chapters, newChapter] }
+            : subject,
+        ),
+      )
+      setNewChapter("")
+      setSelectedSubjectForChapter("")
+      setShowCreateChapter(false)
+      alert("Chapter created successfully!")
+    } else {
+      alert("Please enter a chapter name and select a subject")
+    }
+  }
+
+  const handleNotesNextStep = () => {
+    setNotesError("")
+
+    if (notesUploadStep === 1) {
+      if (!notesUploadData.subject) {
+        setNotesError("Please select a subject")
+        return
+      }
+    } else if (notesUploadStep === 2) {
+      if (!notesUploadData.section) {
+        setNotesError("Please select a section")
+        return
+      }
+    } else if (notesUploadStep === 4) {
+      if (notesUploadData.files.length === 0) {
+        setNotesError("Please upload at least one file")
+        return
+      }
+    }
+
+    setNotesUploadStep(notesUploadStep + 1)
+  }
+
+  const handleNotesPrevStep = () => {
+    setNotesError("")
+    setNotesUploadStep(notesUploadStep - 1)
+  }
+
+  const handleNotesSubmit = () => {
+    console.log("[v0] Uploading notes:", notesUploadData)
+    // Reset form
+    setNotesUploadData({ subject: "", section: "", chapter: "", files: [] })
+    setNotesUploadStep(1)
+    setNotesError("")
+    setShowUploadNotes(false)
+    alert("Notes uploaded successfully!")
+  }
+
+  const handleAddSubject = () => {
+    if (newSubjectName.trim()) {
+      setSubjects([...subjects, newSubjectName.trim()])
+      setNotesUploadData({ ...notesUploadData, subject: newSubjectName.trim() })
+      setNewSubjectName("")
+      setShowAddSubject(false)
+      setNotesError("")
+    }
+  }
+
+  const handleRemoveSubject = (subjectToRemove: string) => {
+    setSubjects(subjects.filter((subject) => subject !== subjectToRemove))
+    // Reset selected subject if it was the one being removed
+    if (notesUploadData.subject === subjectToRemove) {
+      setNotesUploadData({ ...notesUploadData, subject: "" })
+    }
+  }
+
+  const handleAddSection = () => {
+    if (newSectionName.trim() && !sections.includes(newSectionName.trim())) {
+      setSections([...sections, newSectionName.trim()])
+      setNewSectionName("")
+    }
+  }
+
+  const handleRemoveSection = (sectionToRemove: string) => {
+    setSections(sections.filter((section) => section !== sectionToRemove))
+    // Reset selected section if it was the one being removed
+    if (notesUploadData.section === sectionToRemove) {
+      setNotesUploadData({ ...notesUploadData, section: "" })
+    }
+  }
+
+  const handleAddChapter = () => {
+    if (newChapterName.trim()) {
+      setChapters([...chapters, newChapterName.trim()])
+      setNewChapterName("")
+    }
+  }
+
+  const handleRemoveChapter = (chapterToRemove: string) => {
+    setChapters(chapters.filter((chapter) => chapter !== chapterToRemove))
+    // Reset selected chapter if it was the one being removed
+    if (notesUploadData.chapter === chapterToRemove) {
+      setNotesUploadData({ ...notesUploadData, chapter: "" })
     }
   }
 
@@ -496,6 +684,477 @@ export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
         </div>
       )}
 
+      {/* Upload Notes Modal */}
+      {showUploadNotes && userRole === "faculty" && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          onClick={() => {
+            setShowUploadNotes(false)
+            setNotesUploadStep(1)
+            setNotesUploadData({ subject: "", section: "", chapter: "", files: [] })
+            setNotesError("")
+          }}
+        >
+          <div
+            className="bg-card rounded-lg shadow-lg w-full max-w-md p-6 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Upload Notes - Step {notesUploadStep} of 5</h2>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setShowUploadNotes(false)
+                  setNotesUploadStep(1)
+                  setNotesUploadData({ subject: "", section: "", chapter: "", files: [] })
+                  setNotesError("")
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Step 1: Select Subject */}
+              {notesUploadStep === 1 && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">Select Subject</label>
+                  <Select
+                    value={notesUploadData.subject}
+                    onValueChange={(value) => setNotesUploadData({ ...notesUploadData, subject: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a subject" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subjects.map((subject) => (
+                        <SelectItem key={subject} value={subject}>
+                          {subject}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 w-full bg-transparent"
+                    onClick={() => setShowEditSubjects(true)}
+                  >
+                    Edit Subjects
+                  </Button>
+                </div>
+              )}
+
+              {/* Step 2: Select Section */}
+              {notesUploadStep === 2 && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium">Select Section/Class</label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowEditSections(true)}
+                      className="text-xs"
+                    >
+                      Edit Sections
+                    </Button>
+                  </div>
+                  <Select
+                    value={notesUploadData.section}
+                    onValueChange={(value) => setNotesUploadData({ ...notesUploadData, section: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a section" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sections.map((section) => (
+                        <SelectItem key={section} value={section}>
+                          Section {section}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Step 3: Select Chapter */}
+              {notesUploadStep === 3 && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium">Select Chapter</label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowEditChapters(true)}
+                      className="text-emerald-600 hover:text-emerald-700"
+                    >
+                      Edit Chapters
+                    </Button>
+                  </div>
+                  <Select
+                    value={notesUploadData.chapter}
+                    onValueChange={(value) => setNotesUploadData({ ...notesUploadData, chapter: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a chapter" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Others">Others (Default for Extra/Non-Syllabus Notes)</SelectItem>
+                      {chapters.map((chapter) => (
+                        <SelectItem key={chapter} value={chapter}>
+                          {chapter}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Step 4: Upload Files */}
+              {notesUploadStep === 4 && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">Upload File(s) (PDF, JPG, PNG)</label>
+                  <Input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    multiple
+                    onChange={handleNotesFileUpload}
+                    className="cursor-pointer"
+                  />
+                  {notesUploadData.files.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {notesUploadData.files.map((file, index) => (
+                        <p key={index} className="text-sm text-green-600">
+                          ✓ {file.name}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Step 5: Confirmation */}
+              {notesUploadStep === 5 && (
+                <div className="space-y-3">
+                  <h3 className="font-medium">Confirm Upload Details:</h3>
+                  <div className="bg-muted p-3 rounded-lg space-y-2 text-sm">
+                    <p>
+                      <strong>Subject:</strong> {notesUploadData.subject}
+                    </p>
+                    <p>
+                      <strong>Section:</strong> {notesUploadData.section}
+                    </p>
+                    <p>
+                      <strong>Chapter:</strong> {notesUploadData.chapter || "Others"}
+                    </p>
+                    <p>
+                      <strong>Files:</strong> {notesUploadData.files.length} file(s)
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {notesError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-md text-sm">
+                  {notesError}
+                </div>
+              )}
+
+              {/* Navigation Buttons */}
+              <div className="flex gap-2 pt-4">
+                {notesUploadStep > 1 && (
+                  <Button variant="outline" onClick={handleNotesPrevStep} className="flex-1 bg-transparent">
+                    Previous
+                  </Button>
+                )}
+
+                {notesUploadStep < 5 ? (
+                  <Button onClick={handleNotesNextStep} className="flex-1">
+                    Next
+                  </Button>
+                ) : (
+                  <Button onClick={handleNotesSubmit} className="flex-1">
+                    Upload Notes
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Subjects Modal */}
+      {showEditSubjects && (
+        <div className="fixed inset-0 z-60 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Edit Subjects</h3>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setShowEditSubjects(false)
+                  setNewSubjectName("")
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Add New Subject Section */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Add New Subject</label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter subject name"
+                  value={newSubjectName}
+                  onChange={(e) => setNewSubjectName(e.target.value)}
+                  className="flex-1"
+                />
+                <Button onClick={handleAddSubject} size="sm">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Existing Subjects List */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Existing Subjects</label>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {subjects.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No subjects added yet</p>
+                ) : (
+                  subjects.map((subject) => (
+                    <div key={subject} className="flex items-center justify-between p-2 bg-muted rounded">
+                      <span className="text-sm">{subject}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveSubject(subject)}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <Button
+              onClick={() => {
+                setShowEditSubjects(false)
+                setNewSubjectName("")
+              }}
+              className="w-full"
+            >
+              Done
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {showEditSections && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Edit Sections</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setShowEditSections(false)
+                  setNewSectionName("")
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Add New Section */}
+            <div className="mb-4">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter section name"
+                  value={newSectionName}
+                  onChange={(e) => setNewSectionName(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && handleAddSection()}
+                />
+                <Button onClick={handleAddSection} size="sm">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Existing Sections */}
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Sections:</h4>
+              {sections.map((section) => (
+                <div key={section} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <span className="text-sm">Section {section}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveSection(section)}
+                    className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end mt-4">
+              <Button
+                onClick={() => {
+                  setShowEditSections(false)
+                  setNewSectionName("")
+                }}
+              >
+                Done
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEditChapters && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          onClick={() => setShowEditChapters(false)}
+        >
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Edit Chapters</h2>
+              <Button variant="ghost" size="icon" onClick={() => setShowEditChapters(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Add new chapter */}
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter new chapter name"
+                  value={newChapterName}
+                  onChange={(e) => setNewChapterName(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && handleAddChapter()}
+                />
+                <Button onClick={handleAddChapter} size="sm">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Existing chapters list */}
+              <div className="max-h-60 overflow-y-auto space-y-2">
+                {chapters.map((chapter) => (
+                  <div key={chapter} className="flex items-center justify-between p-2 bg-muted rounded">
+                    <span className="text-sm">{chapter}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveChapter(chapter)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <Button onClick={() => setShowEditChapters(false)}>Done</Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCreateSubject && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          onClick={() => setShowCreateSubject(false)}
+        >
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Create New Subject</h2>
+              <Button variant="ghost" size="icon" onClick={() => setShowCreateSubject(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="subject-name" className="block text-sm font-medium mb-2">
+                  Subject Name
+                </label>
+                <Input
+                  id="subject-name"
+                  placeholder="e.g., Advanced Mathematics"
+                  value={newSubject}
+                  onChange={(e) => setNewSubject(e.target.value)}
+                />
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button variant="outline" onClick={() => setShowCreateSubject(false)} className="flex-1">
+                  Cancel
+                </Button>
+                <Button onClick={handleCreateSubject} className="flex-1">
+                  Create Subject
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCreateChapter && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          onClick={() => setShowCreateChapter(false)}
+        >
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Create New Chapter</h2>
+              <Button variant="ghost" size="icon" onClick={() => setShowCreateChapter(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Subject: {selectedSubjectForChapter}</label>
+              </div>
+
+              <div>
+                <label htmlFor="chapter-name" className="block text-sm font-medium mb-2">
+                  Chapter Name
+                </label>
+                <Input
+                  id="chapter-name"
+                  placeholder="e.g., Differential Equations"
+                  value={newChapter}
+                  onChange={(e) => setNewChapter(e.target.value)}
+                />
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button variant="outline" onClick={() => setShowCreateChapter(false)} className="flex-1">
+                  Cancel
+                </Button>
+                <Button onClick={handleCreateChapter} className="flex-1">
+                  Create Chapter
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -638,7 +1297,11 @@ export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
                         <FileText className="mr-2 h-4 w-4" />
                         New Assignment
                       </Button>
-                      <Button className="w-full justify-start bg-transparent" variant="outline">
+                      <Button
+                        className="w-full justify-start bg-transparent"
+                        variant="outline"
+                        onClick={() => setShowUploadNotes(true)}
+                      >
                         <Upload className="mr-2 h-4 w-4" />
                         Upload Notes
                       </Button>
@@ -781,7 +1444,7 @@ export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold">Study Notes</h2>
               {userRole === "faculty" && (
-                <Button>
+                <Button onClick={() => setShowUploadNotes(true)}>
                   <Upload className="mr-2 h-4 w-4" />
                   Upload Notes
                 </Button>
