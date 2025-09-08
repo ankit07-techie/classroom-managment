@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
 import {
   BookOpen,
   Users,
@@ -38,6 +39,7 @@ import {
   MoreHorizontal,
   Archive,
   Copy,
+  MapPin,
 } from "lucide-react"
 
 function ClassroomDashboard({ userRole }: { userRole: "student" | "faculty" }) {
@@ -165,6 +167,94 @@ function ClassroomDashboard({ userRole }: { userRole: "student" | "faculty" }) {
       timestamp: "1 day ago",
     },
   ])
+
+  const [showSubmitAssignment, setShowSubmitAssignment] = useState(false)
+  const [selectedAssignment, setSelectedAssignment] = useState<any>(null)
+  const [submissionFile, setSubmissionFile] = useState<File | null>(null)
+
+  const [leaveFromDate, setLeaveFromDate] = useState("")
+  const [leaveToDate, setLeaveToDate] = useState("")
+  const [customLeaveReason, setCustomLeaveReason] = useState("")
+  const [leaveDocument, setLeaveDocument] = useState<File | null>(null)
+  const [isHalfDay, setIsHalfDay] = useState(false)
+
+  const weeklySchedule = [
+    {
+      id: 1,
+      subject: "Engineering Mathematics-I",
+      code: "EM-I",
+      time: "08:50 - 09:40",
+      building: "NYB",
+      room: "503",
+      professor: "Dr. VKK",
+      avatar: "/diverse-professor-lecturing.png",
+      attendance: 88,
+      canSkip: 3,
+      day: "Monday",
+      status: "upcoming",
+      color: "purple",
+    },
+    {
+      id: 2,
+      subject: "Computer Programming Lab",
+      code: "CPLT",
+      time: "10:30 - 12:20",
+      building: "Lab",
+      room: "Computer Lab 1",
+      professor: "Prof. Singh",
+      avatar: "/professor2.jpg",
+      attendance: 92,
+      canSkip: 5,
+      day: "Monday",
+      status: "current",
+      color: "orange",
+    },
+    {
+      id: 3,
+      subject: "Engineering Chemistry",
+      code: "EC",
+      time: "14:00 - 14:50",
+      building: "NYB",
+      room: "201",
+      professor: "Dr. Sharma",
+      avatar: "/professor3.jpg",
+      attendance: 76,
+      canSkip: 1,
+      day: "Monday",
+      status: "upcoming",
+      color: "green",
+    },
+    {
+      id: 4,
+      subject: "Computer Science Fundamentals",
+      code: "CSF",
+      time: "15:00 - 15:50",
+      building: "NYB",
+      room: "405",
+      professor: "Dr. Kumar",
+      avatar: "/professor4.jpg",
+      attendance: 94,
+      canSkip: 7,
+      day: "Monday",
+      status: "upcoming",
+      color: "blue",
+    },
+    {
+      id: 5,
+      subject: "Physics Lab",
+      code: "PL",
+      time: "16:00 - 17:50",
+      building: "Lab",
+      room: "Physics Lab 2",
+      professor: "Dr. Patel",
+      avatar: "/professor5.jpg",
+      attendance: 82,
+      canSkip: 2,
+      day: "Monday",
+      status: "upcoming",
+      color: "red",
+    },
+  ]
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -446,6 +536,36 @@ function ClassroomDashboard({ userRole }: { userRole: "student" | "faculty" }) {
 
   const toggleResolveDiscussion = (id: number) => {
     setDiscussions(discussions.map((d) => (d.id === id ? { ...d, isResolved: !d.isResolved } : d)))
+  }
+
+  const handleSubmissionFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      const allowedTypes = ["application/pdf", "image/jpeg", "image/png", "image/jpg"]
+      if (!allowedTypes.includes(file.type)) {
+        alert("Only PDF, JPG, and PNG files are allowed")
+        return
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        // 10MB limit
+        alert("File size must be less than 10MB")
+        return
+      }
+      setSubmissionFile(file)
+      console.log("[v0] Submission file uploaded:", file.name, "Type:", file.type)
+    }
+  }
+
+  const handleSubmitAssignment = () => {
+    if (submissionFile && selectedAssignment) {
+      console.log("[v0] Submitting assignment:", selectedAssignment.title, "File:", submissionFile.name)
+      setSubmissionFile(null)
+      setSelectedAssignment(null)
+      setShowSubmitAssignment(false)
+      alert("Assignment submitted successfully!")
+    } else {
+      alert("Please select a file to submit")
+    }
   }
 
   const rooms = [
@@ -1710,15 +1830,71 @@ function ClassroomDashboard({ userRole }: { userRole: "student" | "faculty" }) {
         </div>
       )}
 
+      {/* Student Assignment Submission Modal */}
+      {showSubmitAssignment && userRole === "student" && selectedAssignment && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          onClick={() => setShowSubmitAssignment(false)}
+        >
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Submit Assignment</h2>
+              <Button variant="ghost" size="icon" onClick={() => setShowSubmitAssignment(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="p-3 bg-muted rounded-lg">
+                <h3 className="font-medium">{selectedAssignment.title}</h3>
+                <p className="text-sm text-muted-foreground">Due: {selectedAssignment.dueDate}</p>
+              </div>
+
+              <div>
+                <label htmlFor="submission-file" className="block text-sm font-medium mb-2">
+                  Upload Assignment File (PDF, JPG, PNG - Max 10MB)
+                </label>
+                <Input
+                  id="submission-file"
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={handleSubmissionFileUpload}
+                  className="cursor-pointer"
+                />
+                {submissionFile && <p className="text-sm text-green-600 mt-1">✓ {submissionFile.name} selected</p>}
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowSubmitAssignment(false)
+                    setSubmissionFile(null)
+                    setSelectedAssignment(null)
+                  }}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleSubmitAssignment} className="flex-1">
+                  Submit Assignment
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className={`grid w-full ${userRole === "student" ? "grid-cols-5" : "grid-cols-5"}`}>
+          <TabsList className={`grid w-full ${userRole === "student" ? "grid-cols-6" : "grid-cols-5"}`}>
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="rooms">Rooms</TabsTrigger>
             <TabsTrigger value="assignments">Assignments</TabsTrigger>
             <TabsTrigger value="notes">Notes</TabsTrigger>
             {userRole === "student" && <TabsTrigger value="schedule">Schedule</TabsTrigger>}
+            {userRole === "student" && <TabsTrigger value="student-leave">Student Leave</TabsTrigger>}
             {userRole === "faculty" && <TabsTrigger value="leave">Faculty Leave</TabsTrigger>}
           </TabsList>
 
@@ -1988,7 +2164,16 @@ function ClassroomDashboard({ userRole }: { userRole: "student" | "faculty" }) {
                           {assignment.status === "draft" && <AlertCircle className="mr-1 h-3 w-3" />}
                           {assignment.status}
                         </Badge>
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (userRole === "student") {
+                              setSelectedAssignment(assignment)
+                              setShowSubmitAssignment(true)
+                            }
+                          }}
+                        >
                           {userRole === "faculty" ? "View Details" : "Submit Assignment"}
                         </Button>
                       </div>
@@ -2046,57 +2231,184 @@ function ClassroomDashboard({ userRole }: { userRole: "student" | "faculty" }) {
           {/* Schedule Tab for students */}
           {userRole === "student" && (
             <TabsContent value="schedule" className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Today's Schedule</h2>
-                <Badge variant="outline" className="text-sm">
-                  <Calendar className="mr-1 h-4 w-4" />
-                  {new Date().toLocaleDateString("en-US", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </Badge>
-              </div>
-
               <div className="space-y-4">
-                {todaySchedule.map((classItem) => (
-                  <Card
-                    key={classItem.id}
-                    className={`${classItem.status === "current" ? "border-primary bg-primary/5" : ""}`}
-                  >
-                    <CardContent className="pt-6">
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3">
-                          <h3 className="text-lg font-semibold">{classItem.subject}</h3>
-                          {classItem.status === "current" && (
-                            <Badge className="bg-green-500 hover:bg-green-600">
-                              <Clock className="mr-1 h-3 w-3" />
-                              Current Class
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Clock className="h-4 w-4" />
-                            <span>{classItem.time}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Users className="h-4 w-4" />
-                            <span>{classItem.professor}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <Badge variant="secondary">{classItem.building}</Badge>
-                          <Badge variant="outline">{classItem.room}</Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold">Weekly Schedule</h2>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm">
+                      <Calendar className="mr-1 h-4 w-4" />
+                      Week View
+                    </Button>
+                    <Button variant="ghost" size="sm">
+                      Day View
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Upcoming Class Notification */}
+                <Card className="border-blue-200 bg-blue-50">
+                  <CardContent className="pt-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-2 w-2 bg-blue-500 rounded-full animate-pulse"></div>
+                      <p className="text-sm font-medium text-blue-800">
+                        Next Class: Engineering Chemistry at 14:00 with Dr. Sharma
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
 
-              {todaySchedule.length === 0 && (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {weeklySchedule.map((classItem) => {
+                  const getAttendanceColor = (attendance: number) => {
+                    if (attendance >= 85) return "text-green-600 bg-green-50"
+                    if (attendance >= 75) return "text-yellow-600 bg-yellow-50"
+                    return "text-red-600 bg-red-50"
+                  }
+
+                  const getAttendanceRing = (attendance: number) => {
+                    if (attendance >= 85) return "stroke-green-500"
+                    if (attendance >= 75) return "stroke-yellow-500"
+                    return "stroke-red-500"
+                  }
+
+                  const getSubjectColor = (color: string) => {
+                    const colors = {
+                      purple: "border-l-purple-500 bg-purple-50",
+                      orange: "border-l-orange-500 bg-orange-50",
+                      green: "border-l-green-500 bg-green-50",
+                      blue: "border-l-blue-500 bg-blue-50",
+                      red: "border-l-red-500 bg-red-50",
+                    }
+                    return colors[color as keyof typeof colors] || "border-l-gray-500 bg-gray-50"
+                  }
+
+                  return (
+                    <Card
+                      key={classItem.id}
+                      className={`relative border-l-4 transition-all duration-200 hover:shadow-lg cursor-pointer group ${
+                        classItem.status === "current" ? "ring-2 ring-green-500 shadow-lg" : ""
+                      } ${getSubjectColor(classItem.color)}`}
+                    >
+                      <CardContent className="pt-4">
+                        <div className="space-y-3">
+                          {/* Subject Header */}
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-semibold text-lg">{classItem.code}</h3>
+                                {classItem.status === "current" && (
+                                  <div className="flex items-center gap-1">
+                                    <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+                                    <Badge className="bg-green-500 hover:bg-green-600 text-xs">Live</Badge>
+                                  </div>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground font-medium">{classItem.subject}</p>
+                            </div>
+
+                            {/* Attendance Ring */}
+                            <div className="relative">
+                              <svg className="w-12 h-12 transform -rotate-90">
+                                <circle
+                                  cx="24"
+                                  cy="24"
+                                  r="18"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                  fill="none"
+                                  className="text-gray-200"
+                                />
+                                <circle
+                                  cx="24"
+                                  cy="24"
+                                  r="18"
+                                  strokeWidth="3"
+                                  fill="none"
+                                  strokeDasharray={`${2 * Math.PI * 18}`}
+                                  strokeDashoffset={`${2 * Math.PI * 18 * (1 - classItem.attendance / 100)}`}
+                                  className={getAttendanceRing(classItem.attendance)}
+                                  strokeLinecap="round"
+                                />
+                              </svg>
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-xs font-bold">{classItem.attendance}%</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Time and Location */}
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-sm">
+                              <Clock className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-medium">{classItem.time}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                              <MapPin className="h-4 w-4 text-muted-foreground" />
+                              <span>
+                                {classItem.building}-{classItem.room}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Attendance Status */}
+                          <div
+                            className={`p-2 rounded-lg text-xs font-medium ${getAttendanceColor(classItem.attendance)}`}
+                          >
+                            {classItem.attendance >= 85
+                              ? `✅ Safe zone - Can skip ${classItem.canSkip} more classes`
+                              : classItem.attendance >= 75
+                                ? `⚠️ Warning - Can skip ${classItem.canSkip} more classes`
+                                : `🚨 Critical - Attend next ${Math.abs(classItem.canSkip)} classes`}
+                          </div>
+
+                          {/* Hover Tooltip Content */}
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute top-2 right-2 z-10">
+                            <div className="bg-white border rounded-lg shadow-lg p-3 min-w-48">
+                              <div className="flex items-center gap-2 mb-2">
+                                <img
+                                  src={classItem.avatar || "/placeholder.svg"}
+                                  alt={classItem.professor}
+                                  className="w-8 h-8 rounded-full"
+                                />
+                                <div>
+                                  <p className="font-medium text-sm">{classItem.professor}</p>
+                                  <p className="text-xs text-muted-foreground">Professor</p>
+                                </div>
+                              </div>
+                              <div className="text-xs space-y-1">
+                                <p>
+                                  <span className="font-medium">Attendance:</span> {classItem.attendance}%
+                                </p>
+                                <p>
+                                  <span className="font-medium">Can skip:</span> {classItem.canSkip} classes
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+
+              <div className="flex flex-wrap gap-2 pt-4">
+                <Button variant="outline" size="sm">
+                  <Download className="mr-1 h-4 w-4" />
+                  Export to Calendar
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Bell className="mr-1 h-4 w-4" />
+                  Set Reminders
+                </Button>
+                <Button variant="outline" size="sm">
+                  <BarChart3 className="mr-1 h-4 w-4" />
+                  Attendance Report
+                </Button>
+              </div>
+
+              {weeklySchedule.length === 0 && (
                 <Card>
                   <CardContent className="pt-6">
                     <div className="text-center py-8">
@@ -2191,6 +2503,269 @@ function ClassroomDashboard({ userRole }: { userRole: "student" | "faculty" }) {
                           {leave.status === "Pending" && <Clock className="mr-1 h-3 w-3" />}
                           {leave.status}
                         </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+          {userRole === "student" && (
+            <TabsContent value="student-leave" className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-emerald-800">Student Leave Management</h2>
+              </div>
+
+              {/* Leave Balance Dashboard */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium text-emerald-700">Casual Leave</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-emerald-800">8</div>
+                    <p className="text-xs text-gray-600">Available days</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium text-emerald-700">Medical Leave</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-emerald-800">12</div>
+                    <p className="text-xs text-gray-600">Available days</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium text-emerald-700">Emergency Leave</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-emerald-800">5</div>
+                    <p className="text-xs text-gray-600">Available days</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Apply for Leave Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-emerald-800">Apply for Leave</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Step 1: Leave Type Selection */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium text-emerald-700">Select Leave Type</Label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {["Casual Leave", "Medical Leave", "Emergency Leave"].map((type) => (
+                        <Button
+                          key={type}
+                          variant={selectedLeaveType === type ? "default" : "outline"}
+                          className={`h-12 ${selectedLeaveType === type ? "bg-emerald-600 hover:bg-emerald-700" : "border-emerald-200 hover:bg-emerald-50"}`}
+                          onClick={() => setSelectedLeaveType(type)}
+                        >
+                          {type}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Step 2: Date Selection */}
+                  {selectedLeaveType && (
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium text-emerald-700">Select Leave Dates</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-xs text-gray-600">From Date</Label>
+                          <Input
+                            type="date"
+                            value={leaveFromDate}
+                            onChange={(e) => setLeaveFromDate(e.target.value)}
+                            className="border-emerald-200 focus:border-emerald-500"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-gray-600">To Date</Label>
+                          <Input
+                            type="date"
+                            value={leaveToDate}
+                            onChange={(e) => setLeaveToDate(e.target.value)}
+                            className="border-emerald-200 focus:border-emerald-500"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="halfDay"
+                          checked={isHalfDay}
+                          onChange={(e) => setIsHalfDay(e.target.checked)}
+                          className="rounded border-emerald-300"
+                        />
+                        <Label htmlFor="halfDay" className="text-sm text-emerald-700">
+                          Half Day Leave
+                        </Label>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 3: Reason Selection */}
+                  {selectedLeaveType && leaveFromDate && (
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium text-emerald-700">Reason for Leave</Label>
+                      <select
+                        value={leaveReason}
+                        onChange={(e) => setLeaveReason(e.target.value)}
+                        className="w-full p-2 border border-emerald-200 rounded-md focus:border-emerald-500 focus:outline-none"
+                      >
+                        <option value="">Select a reason</option>
+                        <option value="Fever/Sick">Fever/Sick</option>
+                        <option value="Family Emergency">Family Emergency</option>
+                        <option value="Personal Work">Personal Work</option>
+                        <option value="Other">Other</option>
+                      </select>
+                      {leaveReason === "Other" && (
+                        <textarea
+                          placeholder="Please specify your reason..."
+                          value={customLeaveReason}
+                          onChange={(e) => setCustomLeaveReason(e.target.value)}
+                          className="w-full p-3 border border-emerald-200 rounded-md focus:border-emerald-500 focus:outline-none"
+                          rows={3}
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  {/* Step 4: Document Upload */}
+                  {selectedLeaveType && leaveFromDate && leaveReason && (
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium text-emerald-700">Supporting Documents (Optional)</Label>
+                      <div className="border-2 border-dashed border-emerald-200 rounded-lg p-6 text-center">
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={(e) => setLeaveDocument(e.target.files?.[0] || null)}
+                          className="hidden"
+                          id="leave-document"
+                        />
+                        <label htmlFor="leave-document" className="cursor-pointer">
+                          <div className="space-y-2">
+                            <div className="text-emerald-600">
+                              <svg className="mx-auto h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                                />
+                              </svg>
+                            </div>
+                            <div className="text-sm text-emerald-700">
+                              {leaveDocument ? leaveDocument.name : "Click to upload document"}
+                            </div>
+                            <div className="text-xs text-gray-500">PDF, JPG, PNG (Max 10MB)</div>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 5: Submit Button */}
+                  {selectedLeaveType && leaveFromDate && leaveReason && (
+                    <div className="flex justify-end space-x-3">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedLeaveType("")
+                          setLeaveFromDate("")
+                          setLeaveToDate("")
+                          setLeaveReason("")
+                          setCustomLeaveReason("")
+                          setLeaveDocument(null)
+                          setIsHalfDay(false)
+                        }}
+                        className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                      >
+                        Reset
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          // Handle leave submission
+                          alert("Leave application submitted successfully!")
+                          setSelectedLeaveType("")
+                          setLeaveFromDate("")
+                          setLeaveToDate("")
+                          setLeaveReason("")
+                          setCustomLeaveReason("")
+                          setLeaveDocument(null)
+                          setIsHalfDay(false)
+                        }}
+                        className="bg-emerald-600 hover:bg-emerald-700"
+                      >
+                        Submit Leave Application
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Leave History */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-emerald-800">Leave History</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[
+                      {
+                        id: 1,
+                        type: "Medical Leave",
+                        dates: "Dec 15-17, 2024",
+                        reason: "Fever/Sick",
+                        status: "Approved",
+                        appliedOn: "Dec 14, 2024",
+                      },
+                      {
+                        id: 2,
+                        type: "Casual Leave",
+                        dates: "Nov 28, 2024",
+                        reason: "Personal Work",
+                        status: "Pending",
+                        appliedOn: "Nov 27, 2024",
+                      },
+                      {
+                        id: 3,
+                        type: "Emergency Leave",
+                        dates: "Oct 20-21, 2024",
+                        reason: "Family Emergency",
+                        status: "Approved",
+                        appliedOn: "Oct 19, 2024",
+                      },
+                    ].map((leave) => (
+                      <div
+                        key={leave.id}
+                        className="flex items-center justify-between p-4 border border-emerald-100 rounded-lg"
+                      >
+                        <div className="space-y-1">
+                          <div className="font-medium text-emerald-800">{leave.type}</div>
+                          <div className="text-sm text-gray-600">{leave.dates}</div>
+                          <div className="text-sm text-gray-600">Reason: {leave.reason}</div>
+                          <div className="text-xs text-gray-500">Applied: {leave.appliedOn}</div>
+                        </div>
+                        <div className="text-right">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              leave.status === "Approved"
+                                ? "bg-green-100 text-green-800"
+                                : leave.status === "Pending"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {leave.status}
+                          </span>
+                        </div>
                       </div>
                     ))}
                   </div>
