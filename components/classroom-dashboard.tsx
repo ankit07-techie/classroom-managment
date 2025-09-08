@@ -27,13 +27,20 @@ import {
   X,
   Send,
   Trash2,
+  Settings,
+  Heart,
+  Award,
+  Home,
+  BarChart3,
+  MessageSquare,
+  Pin,
+  Check,
+  MoreHorizontal,
+  Archive,
+  Copy,
 } from "lucide-react"
 
-interface ClassroomDashboardProps {
-  userRole: "student" | "faculty"
-}
-
-export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
+function ClassroomDashboard({ userRole }: { userRole: "student" | "faculty" }) {
   const [activeTab, setActiveTab] = useState("dashboard")
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [showNotifications, setShowNotifications] = useState(false)
@@ -116,6 +123,47 @@ export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
     { id: 1, name: "Mathematics", chapters: ["Calculus", "Linear Algebra", "Statistics"] },
     { id: 2, name: "Physics", chapters: ["Mechanics", "Thermodynamics", "Electromagnetism"] },
     { id: 3, name: "Chemistry", chapters: ["Organic Chemistry", "Inorganic Chemistry", "Physical Chemistry"] },
+  ])
+
+  const [showLeaveRequest, setShowLeaveRequest] = useState(false)
+  const [leaveStep, setLeaveStep] = useState(1)
+  const [selectedLeaveType, setSelectedLeaveType] = useState("")
+  const [selectedLeaveDates, setSelectedLeaveDates] = useState<string[]>([])
+  const [leaveDuration, setLeaveDuration] = useState("")
+  const [leaveReason, setLeaveReason] = useState("")
+  const [customReason, setCustomReason] = useState("")
+  const [leaveAttachment, setLeaveAttachment] = useState<File | null>(null)
+
+  const [selectedRoom, setSelectedRoom] = useState<any>(null)
+  const [showRoomManagement, setShowRoomManagement] = useState(false)
+  const [roomManagementTab, setRoomManagementTab] = useState("overview")
+  const [editingRoom, setEditingRoom] = useState<any>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [newMemberEmail, setNewMemberEmail] = useState("")
+  const [newDiscussion, setNewDiscussion] = useState({ title: "", content: "" })
+  const [discussions, setDiscussions] = useState([
+    {
+      id: 1,
+      title: "Question about Assignment 3",
+      author: "John Doe",
+      content: "Can someone explain the third problem?",
+      replies: 2,
+      likes: 5,
+      isPinned: false,
+      isResolved: false,
+      timestamp: "2 hours ago",
+    },
+    {
+      id: 2,
+      title: "Study Group Formation",
+      author: "Jane Smith",
+      content: "Looking for study partners for the upcoming exam",
+      replies: 8,
+      likes: 12,
+      isPinned: true,
+      isResolved: false,
+      timestamp: "1 day ago",
+    },
   ])
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -332,6 +380,72 @@ export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
     if (notesUploadData.chapter === chapterToRemove) {
       setNotesUploadData({ ...notesUploadData, chapter: "" })
     }
+  }
+
+  const handleRoomClick = (room: any) => {
+    if (userRole === "faculty") {
+      setSelectedRoom(room)
+      setShowRoomManagement(true)
+      setEditingRoom({ ...room })
+    }
+  }
+
+  const handleUpdateRoom = () => {
+    console.log("[v0] Updating room:", editingRoom)
+    setSelectedRoom(editingRoom)
+    alert("Room updated successfully!")
+  }
+
+  const handleDeleteRoom = () => {
+    console.log("[v0] Deleting room:", selectedRoom.id)
+    setShowDeleteConfirm(false)
+    setShowRoomManagement(false)
+    alert("Room deleted successfully!")
+  }
+
+  const handleArchiveRoom = () => {
+    console.log("[v0] Archiving room:", selectedRoom.id)
+    alert("Room archived successfully!")
+  }
+
+  const handleDuplicateRoom = () => {
+    console.log("[v0] Duplicating room:", selectedRoom.id)
+    alert("Room duplicated successfully!")
+  }
+
+  const handleInviteMember = () => {
+    if (newMemberEmail.trim()) {
+      console.log("[v0] Inviting member:", newMemberEmail)
+      setNewMemberEmail("")
+      alert("Invitation sent successfully!")
+    }
+  }
+
+  const handleCreateDiscussion = () => {
+    if (newDiscussion.title.trim() && newDiscussion.content.trim()) {
+      const discussion = {
+        id: discussions.length + 1,
+        title: newDiscussion.title,
+        author: "Faculty",
+        content: newDiscussion.content,
+        replies: 0,
+        likes: 0,
+        isPinned: false,
+        isResolved: false,
+        timestamp: "Just now",
+      }
+      setDiscussions([discussion, ...discussions])
+      setNewDiscussion({ title: "", content: "" })
+      alert("Discussion created successfully!")
+    }
+  }
+
+  const togglePinDiscussion = (id: number) => {
+    setDiscussions(discussions.map((d) => (d.id === id ? { ...d, isPinned: !d.isPinned } : d)))
+  }
+
+  const toggleResolveDiscussion = (id: number) => {
+    setDiscussions(discussions.map((d) => (d.id === id ? { ...d, isResolved: !d.isResolved } : d)))
   }
 
   const rooms = [
@@ -567,18 +681,29 @@ export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
                 <label htmlFor="section" className="block text-sm font-medium mb-2">
                   Section
                 </label>
-                <Select value={newRoom.section} onValueChange={(value) => setNewRoom({ ...newRoom, section: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select section" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="A">Section A</SelectItem>
-                    <SelectItem value="B">Section B</SelectItem>
-                    <SelectItem value="C">Section C</SelectItem>
-                    <SelectItem value="D">Section D</SelectItem>
-                    <SelectItem value="E">Section E</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center gap-2">
+                  <Select value={newRoom.section} onValueChange={(value) => setNewRoom({ ...newRoom, section: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select section" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sections.map((section) => (
+                        <SelectItem key={section} value={section}>
+                          Section {section}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowEditSections(true)}
+                    className="text-xs whitespace-nowrap"
+                  >
+                    Edit Sections
+                  </Button>
+                </div>
               </div>
 
               <div className="flex gap-2 pt-4">
@@ -638,21 +763,33 @@ export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
                 <label htmlFor="assignment-section" className="block text-sm font-medium mb-2">
                   Section
                 </label>
-                <Select
-                  value={newAssignment.section}
-                  onValueChange={(value) => setNewAssignment({ ...newAssignment, section: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select section" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="A">Section A</SelectItem>
-                    <SelectItem value="B">Section B</SelectItem>
-                    <SelectItem value="C">Section C</SelectItem>
-                    <SelectItem value="D">Section D</SelectItem>
-                    <SelectItem value="E">Section E</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                  <Select
+                    value={newAssignment.section}
+                    onValueChange={(value) => setNewAssignment({ ...newAssignment, section: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select section" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sections.map((section) => (
+                        <SelectItem key={section} value={section}>
+                          Section {section}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowEditSections(true)}
+                    className="whitespace-nowrap"
+                  >
+                    <Settings className="h-4 w-4 mr-1" />
+                    Edit
+                  </Button>
+                </div>
               </div>
 
               <div>
@@ -1155,15 +1292,434 @@ export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
         </div>
       )}
 
+      {/* Room Management Modal */}
+      {showRoomManagement && selectedRoom && userRole === "faculty" && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div
+            className="bg-card rounded-lg shadow-lg w-full max-w-6xl h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-2xl font-bold">{selectedRoom.name}</h2>
+              <Button variant="ghost" size="icon" onClick={() => setShowRoomManagement(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="flex h-full">
+              {/* Sidebar */}
+              <div className="w-64 border-r bg-muted/30 p-4">
+                <nav className="space-y-2">
+                  <Button
+                    variant={roomManagementTab === "overview" ? "default" : "ghost"}
+                    className="w-full justify-start"
+                    onClick={() => setRoomManagementTab("overview")}
+                  >
+                    <Home className="mr-2 h-4 w-4" />
+                    Overview
+                  </Button>
+                  <Button
+                    variant={roomManagementTab === "management" ? "default" : "ghost"}
+                    className="w-full justify-start"
+                    onClick={() => setRoomManagementTab("management")}
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    Room Management
+                  </Button>
+                  <Button
+                    variant={roomManagementTab === "members" ? "default" : "ghost"}
+                    className="w-full justify-start"
+                    onClick={() => setRoomManagementTab("members")}
+                  >
+                    <Users className="mr-2 h-4 w-4" />
+                    Members
+                  </Button>
+                  <Button
+                    variant={roomManagementTab === "analytics" ? "default" : "ghost"}
+                    className="w-full justify-start"
+                    onClick={() => setRoomManagementTab("analytics")}
+                  >
+                    <BarChart3 className="mr-2 h-4 w-4" />
+                    Analytics
+                  </Button>
+                  <Button
+                    variant={roomManagementTab === "discussions" ? "default" : "ghost"}
+                    className="w-full justify-start"
+                    onClick={() => setRoomManagementTab("discussions")}
+                  >
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    Discussions
+                  </Button>
+                </nav>
+              </div>
+
+              {/* Main Content */}
+              <div className="flex-1 p-6 overflow-y-auto">
+                {roomManagementTab === "overview" && (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm font-medium">Total Students</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold">{selectedRoom.students}</div>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm font-medium">Assignments</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold">12</div>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm font-medium">Average Attendance</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold">85%</div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Recent Activity</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                            <span className="text-sm">John Doe submitted Assignment 3</span>
+                            <span className="text-xs text-muted-foreground ml-auto">2 hours ago</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
+                            <span className="text-sm">New student joined the room</span>
+                            <span className="text-xs text-muted-foreground ml-auto">1 day ago</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="h-2 w-2 bg-orange-500 rounded-full"></div>
+                            <span className="text-sm">Assignment 4 was posted</span>
+                            <span className="text-xs text-muted-foreground ml-auto">2 days ago</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+
+                {roomManagementTab === "management" && (
+                  <div className="space-y-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Edit Room Details</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Room Name</label>
+                          <Input
+                            value={editingRoom?.name || ""}
+                            onChange={(e) => setEditingRoom({ ...editingRoom, name: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Course Code</label>
+                          <Input
+                            value={editingRoom?.code || ""}
+                            onChange={(e) => setEditingRoom({ ...editingRoom, code: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Description</label>
+                          <textarea
+                            className="w-full p-2 border rounded-md"
+                            rows={3}
+                            placeholder="Room description..."
+                          />
+                        </div>
+                        <Button onClick={handleUpdateRoom}>Update Room</Button>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Room Actions</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <Button
+                          variant="outline"
+                          onClick={handleArchiveRoom}
+                          className="w-full justify-start bg-transparent"
+                        >
+                          <Archive className="mr-2 h-4 w-4" />
+                          Archive Room
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={handleDuplicateRoom}
+                          className="w-full justify-start bg-transparent"
+                        >
+                          <Copy className="mr-2 h-4 w-4" />
+                          Duplicate Room
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={() => setShowDeleteConfirm(true)}
+                          className="w-full justify-start"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete Room
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+
+                {roomManagementTab === "members" && (
+                  <div className="space-y-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Invite Members</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Enter email or roll number"
+                            value={newMemberEmail}
+                            onChange={(e) => setNewMemberEmail(e.target.value)}
+                          />
+                          <Button onClick={handleInviteMember}>Invite</Button>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Room Join Code: <code className="bg-muted px-2 py-1 rounded">ABC123</code>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Current Members ({selectedRoom.students})</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          {Array.from({ length: 5 }, (_, i) => (
+                            <div key={i} className="flex items-center justify-between p-3 border rounded-lg">
+                              <div className="flex items-center gap-3">
+                                <div className="h-8 w-8 bg-primary rounded-full flex items-center justify-center text-white text-sm">
+                                  {String.fromCharCode(65 + i)}
+                                </div>
+                                <div>
+                                  <div className="font-medium">Student {i + 1}</div>
+                                  <div className="text-sm text-muted-foreground">student{i + 1}@ju.edu</div>
+                                </div>
+                              </div>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+
+                {roomManagementTab === "analytics" && (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Attendance Tracker</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-3">
+                            <div className="flex justify-between">
+                              <span>Today's Class</span>
+                              <span className="font-medium">24/28 Present</span>
+                            </div>
+                            <div className="w-full bg-muted rounded-full h-2">
+                              <div className="bg-green-500 h-2 rounded-full" style={{ width: "85%" }}></div>
+                            </div>
+                            <Button size="sm" className="w-full">
+                              Mark Attendance
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Submission Reports</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-3">
+                            <div className="flex justify-between">
+                              <span>Assignment 3</span>
+                              <span className="font-medium">18/28 Submitted</span>
+                            </div>
+                            <div className="w-full bg-muted rounded-full h-2">
+                              <div className="bg-blue-500 h-2 rounded-full" style={{ width: "64%" }}></div>
+                            </div>
+                            <Button size="sm" variant="outline" className="w-full bg-transparent">
+                              View Details
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Activity Log</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3 p-3 border rounded-lg">
+                            <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                            <div className="flex-1">
+                              <div className="font-medium">John Doe submitted Assignment 3</div>
+                              <div className="text-sm text-muted-foreground">2 hours ago</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 p-3 border rounded-lg">
+                            <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
+                            <div className="flex-1">
+                              <div className="font-medium">Sarah Wilson joined the room</div>
+                              <div className="text-sm text-muted-foreground">1 day ago</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 p-3 border rounded-lg">
+                            <div className="h-2 w-2 bg-orange-500 rounded-full"></div>
+                            <div className="flex-1">
+                              <div className="font-medium">New assignment posted</div>
+                              <div className="text-sm text-muted-foreground">2 days ago</div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+
+                {roomManagementTab === "discussions" && (
+                  <div className="space-y-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Create New Discussion</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <Input
+                          placeholder="Discussion title"
+                          value={newDiscussion.title}
+                          onChange={(e) => setNewDiscussion({ ...newDiscussion, title: e.target.value })}
+                        />
+                        <textarea
+                          className="w-full p-2 border rounded-md"
+                          rows={3}
+                          placeholder="Discussion content..."
+                          value={newDiscussion.content}
+                          onChange={(e) => setNewDiscussion({ ...newDiscussion, content: e.target.value })}
+                        />
+                        <Button onClick={handleCreateDiscussion}>Create Discussion</Button>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Discussions & Q&A</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {discussions
+                            .sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0))
+                            .map((discussion) => (
+                              <div key={discussion.id} className="border rounded-lg p-4">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <h3 className="font-medium">{discussion.title}</h3>
+                                      {discussion.isPinned && (
+                                        <Badge variant="secondary" className="text-xs">
+                                          Pinned
+                                        </Badge>
+                                      )}
+                                      {discussion.isResolved && (
+                                        <Badge variant="default" className="text-xs bg-green-500">
+                                          Resolved
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <p className="text-sm text-muted-foreground mb-2">{discussion.content}</p>
+                                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                      <span>By {discussion.author}</span>
+                                      <span>{discussion.timestamp}</span>
+                                      <span>{discussion.replies} replies</span>
+                                      <span>{discussion.likes} likes</span>
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => togglePinDiscussion(discussion.id)}
+                                    >
+                                      <Pin className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => toggleResolveDiscussion(discussion.id)}
+                                    >
+                                      <Check className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-md p-6">
+            <h3 className="text-lg font-semibold mb-4">Delete Room</h3>
+            <p className="text-muted-foreground mb-6">
+              Are you sure you want to delete this room? This action cannot be undone.
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} className="flex-1">
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteRoom} className="flex-1">
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className={`grid w-full ${userRole === "student" ? "grid-cols-5" : "grid-cols-4"}`}>
+          <TabsList className={`grid w-full ${userRole === "student" ? "grid-cols-5" : "grid-cols-5"}`}>
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="rooms">Rooms</TabsTrigger>
             <TabsTrigger value="assignments">Assignments</TabsTrigger>
             <TabsTrigger value="notes">Notes</TabsTrigger>
             {userRole === "student" && <TabsTrigger value="schedule">Schedule</TabsTrigger>}
+            {userRole === "faculty" && <TabsTrigger value="leave">Faculty Leave</TabsTrigger>}
           </TabsList>
 
           {/* Dashboard Tab */}
@@ -1356,7 +1912,11 @@ export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {rooms.map((room) => (
-                <Card key={room.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+                <Card
+                  key={room.id}
+                  className="hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() => handleRoomClick(room)}
+                >
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className={`h-12 w-12 rounded-lg ${room.color} flex items-center justify-center`}>
@@ -1549,8 +2109,340 @@ export function ClassroomDashboard({ userRole }: ClassroomDashboardProps) {
               )}
             </TabsContent>
           )}
+
+          {/* Faculty Leave Tab */}
+          {userRole === "faculty" && (
+            <TabsContent value="leave" className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">Faculty Leave Management</h2>
+                <Button onClick={() => setShowLeaveRequest(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Apply for Leave
+                </Button>
+              </div>
+
+              {/* Leave Balance Dashboard */}
+              <div className="grid gap-6 md:grid-cols-3">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Casual Leave</CardTitle>
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">8</div>
+                    <p className="text-xs text-muted-foreground">Available days</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Sick Leave</CardTitle>
+                    <Heart className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">12</div>
+                    <p className="text-xs text-muted-foreground">Available days</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Earned Leave</CardTitle>
+                    <Award className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">15</div>
+                    <p className="text-xs text-muted-foreground">Available days</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Leave History */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Leave History</CardTitle>
+                  <CardDescription>Track your past leave applications and their status</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[
+                      { id: 1, dates: "Dec 15-16, 2024", reason: "Personal Work", status: "Approved", type: "Casual" },
+                      { id: 2, dates: "Nov 28, 2024", reason: "Fever", status: "Approved", type: "Sick" },
+                      { id: 3, dates: "Nov 10-12, 2024", reason: "Family Function", status: "Pending", type: "Earned" },
+                    ].map((leave) => (
+                      <div key={leave.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="space-y-1">
+                          <p className="font-medium">{leave.dates}</p>
+                          <p className="text-sm text-muted-foreground">{leave.reason}</p>
+                          <Badge variant="outline" className="text-xs">
+                            {leave.type} Leave
+                          </Badge>
+                        </div>
+                        <Badge
+                          variant={
+                            leave.status === "Approved"
+                              ? "default"
+                              : leave.status === "Pending"
+                                ? "secondary"
+                                : "destructive"
+                          }
+                        >
+                          {leave.status === "Approved" && <CheckCircle className="mr-1 h-3 w-3" />}
+                          {leave.status === "Pending" && <Clock className="mr-1 h-3 w-3" />}
+                          {leave.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+          {/* Leave Request Modal */}
+          {showLeaveRequest && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold">Apply for Leave</h2>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setShowLeaveRequest(false)
+                      setLeaveStep(1)
+                      setSelectedLeaveType("")
+                      setSelectedLeaveDates([])
+                      setLeaveReason("")
+                      setCustomReason("")
+                      setLeaveAttachment(null)
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Step 1: Leave Type Selection */}
+                {leaveStep === 1 && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Select Leave Type</h3>
+                    <div className="grid gap-3">
+                      {["Casual Leave", "Sick Leave", "Earned Leave"].map((type) => (
+                        <Button
+                          key={type}
+                          variant={selectedLeaveType === type ? "default" : "outline"}
+                          className="justify-start h-auto p-4"
+                          onClick={() => setSelectedLeaveType(type)}
+                        >
+                          <div className="text-left">
+                            <div className="font-medium">{type}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {type === "Casual Leave" && "8 days available"}
+                              {type === "Sick Leave" && "12 days available"}
+                              {type === "Earned Leave" && "15 days available"}
+                            </div>
+                          </div>
+                        </Button>
+                      ))}
+                    </div>
+                    <div className="flex justify-end">
+                      <Button onClick={() => setLeaveStep(2)} disabled={!selectedLeaveType}>
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 2: Date Selection */}
+                {leaveStep === 2 && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Select Leave Dates</h3>
+                    <div className="space-y-3">
+                      <div className="grid gap-2">
+                        <label className="text-sm font-medium">Leave Duration</label>
+                        <select
+                          className="border rounded-md p-2"
+                          value={leaveDuration}
+                          onChange={(e) => setLeaveDuration(e.target.value)}
+                        >
+                          <option value="">Select duration</option>
+                          <option value="single">Single Day</option>
+                          <option value="multiple">Multiple Days</option>
+                          <option value="half">Half Day</option>
+                        </select>
+                      </div>
+
+                      {leaveDuration === "single" && (
+                        <div>
+                          <label className="text-sm font-medium">Select Date</label>
+                          <Input type="date" className="mt-1" />
+                        </div>
+                      )}
+
+                      {leaveDuration === "multiple" && (
+                        <div className="grid gap-2">
+                          <label className="text-sm font-medium">From Date</label>
+                          <Input type="date" className="mb-2" />
+                          <label className="text-sm font-medium">To Date</label>
+                          <Input type="date" />
+                        </div>
+                      )}
+
+                      {leaveDuration === "half" && (
+                        <div className="grid gap-2">
+                          <label className="text-sm font-medium">Select Date</label>
+                          <Input type="date" className="mb-2" />
+                          <label className="text-sm font-medium">Half Day Type</label>
+                          <select className="border rounded-md p-2">
+                            <option value="morning">Morning Half</option>
+                            <option value="afternoon">Afternoon Half</option>
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex justify-between">
+                      <Button variant="outline" onClick={() => setLeaveStep(1)}>
+                        Back
+                      </Button>
+                      <Button onClick={() => setLeaveStep(3)} disabled={!leaveDuration}>
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 3: Reason Selection */}
+                {leaveStep === 3 && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Select Leave Reason</h3>
+                    <div className="space-y-2">
+                      {["Fever", "Personal Work", "Casual Leave", "Other"].map((reason) => (
+                        <Button
+                          key={reason}
+                          variant={leaveReason === reason ? "default" : "outline"}
+                          className="w-full justify-start"
+                          onClick={() => setLeaveReason(reason)}
+                        >
+                          {reason}
+                        </Button>
+                      ))}
+                    </div>
+
+                    {leaveReason === "Other" && (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Custom Reason</label>
+                        <textarea
+                          className="w-full border rounded-md p-2 min-h-[80px]"
+                          placeholder="Please specify your reason..."
+                          value={customReason}
+                          onChange={(e) => setCustomReason(e.target.value)}
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex justify-between">
+                      <Button variant="outline" onClick={() => setLeaveStep(2)}>
+                        Back
+                      </Button>
+                      <Button
+                        onClick={() => setLeaveStep(4)}
+                        disabled={!leaveReason || (leaveReason === "Other" && !customReason)}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 4: Attachment Upload */}
+                {leaveStep === 4 && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Upload Supporting Document (Optional)</h3>
+                    <div className="space-y-3">
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                        <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium">Upload medical certificate or supporting document</p>
+                          <p className="text-xs text-muted-foreground">PDF, JPG, PNG (Max 5MB)</p>
+                          <Input
+                            type="file"
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            onChange={(e) => setLeaveAttachment(e.target.files?.[0] || null)}
+                            className="mt-2"
+                          />
+                        </div>
+                      </div>
+                      {leaveAttachment && <p className="text-sm text-green-600">✓ {leaveAttachment.name} uploaded</p>}
+                    </div>
+
+                    <div className="flex justify-between">
+                      <Button variant="outline" onClick={() => setLeaveStep(3)}>
+                        Back
+                      </Button>
+                      <Button onClick={() => setLeaveStep(5)}>Next</Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 5: Confirmation */}
+                {leaveStep === 5 && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Confirm Leave Application</h3>
+                    <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                      <div className="grid gap-2">
+                        <div className="flex justify-between">
+                          <span className="font-medium">Leave Type:</span>
+                          <span>{selectedLeaveType}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Duration:</span>
+                          <span>{leaveDuration}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Reason:</span>
+                          <span>{leaveReason === "Other" ? customReason : leaveReason}</span>
+                        </div>
+                        {leaveAttachment && (
+                          <div className="flex justify-between">
+                            <span className="font-medium">Attachment:</span>
+                            <span>{leaveAttachment.name}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <Button variant="outline" onClick={() => setLeaveStep(4)}>
+                        Back
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          // Handle leave submission
+                          setShowLeaveRequest(false)
+                          setLeaveStep(1)
+                          // Reset form
+                          setSelectedLeaveType("")
+                          setSelectedLeaveDates([])
+                          setLeaveReason("")
+                          setCustomReason("")
+                          setLeaveAttachment(null)
+                          // Show success message
+                          alert("Leave application submitted successfully! You will be notified once it's reviewed.")
+                        }}
+                      >
+                        Submit Application
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </Tabs>
       </main>
     </div>
   )
 }
+
+export { ClassroomDashboard }
+export default ClassroomDashboard
